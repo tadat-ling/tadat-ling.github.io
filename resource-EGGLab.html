@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EGGLab - Dat Ta</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+        function loadComponent(id, url) {
+            fetch(url)
+                .then(response => response.text())
+                .then(data => document.getElementById(id).innerHTML = data)
+                .catch(error => console.error(`Error loading ${url}:`, error));
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            loadComponent("nav-placeholder", "nav.html");
+            loadComponent("footer-placeholder", "footer.html");
+        });
+  </script>
+</head>
+<body>
+
+  <!-- Navigation Section -->
+  <div id="nav-placeholder"></div>
+
+  <!-- Header Section -->
+  <header>
+    <h1>EGG Lab v1.0</h1>
+  </header>
+
+  <!-- Personal Content Section -->
+  <section id="demo">
+    <div>
+        <p>This program was inspired by EGG tools such as praatdet, peakdet and PrEgg. I began developing this script after completing a fieldwork trip in Northern Vietnam. The script extracts several glottal parameters from an EGG signal. Durations are calculated in seconds. Multiply by 1000 manually if millisecond units are needed.</p>
+        <p>Methodology: Rothenberg method (Rothenberg & Mahshie, 1988), dEGG (Henrich et al., 2004), First central difference (Herbst et al., 2014) and hybrid approaches proposed by Howard (1995) and Henry Tehrani (2009).</p>
+        <p>Processing speed: 45-50 (upto 80) files per minute.</p>
+        <p>Users can manually adjust methods and thresholds via the Settings window.</p>
+        <p>EGG Lab v1.0 <a href="EGGLab_v1-1.praat" download>Download</a></p>
+        <p>EGG Lab v1.0 Manual [Available soon...]</p>
+    </div>
+  </section>
+
+    <!-- 固定页脚 -->
+    <div id="footer-placeholder"></div>
+</body>
+</html>
