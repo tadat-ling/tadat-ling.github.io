@@ -72,61 +72,37 @@
 
   <!-- Personal Content Section -->
   <div class="feedback-container">
-
-    <form action="https://formsubmit.co/datbg.0702@gmail.com" method="POST">
-    
+    <form id="feedbackForm">
     <textarea name="feedback" placeholder="Enter your feedback..." rows="5" required></textarea>
-    
     <input type="email" name="email" placeholder="Enter your email..." required>
-    
     <button type="submit">SEND</button>
-    
     <input type="hidden" name="_subject" value="New feedback from Dat Ta homepage">
-    
     <input type="hidden" name="_captcha" value="false">
-    
     <input type="hidden" name="_template" value="table">
-    
+    <div id="successMessage" style="display:none;margin-top:10px;color:green;">
+    Sent successfully
+    </div>
     </form>
-    
   </div>
-    
-    
-    <script>
-    
-    document.getElementById("feedbackForm").addEventListener("submit",async function(e){
-    
-    e.preventDefault();
-    
-    const form = e.target;
-    
-    const data = new FormData(form);
-    
-    
-    /* subject */
-    data.append("_subject","New feedback from Dat Ta homepage");
-    
-    /* auto reply */
-    data.append("_autoresponse","Thank you for your feedback. I have received your message.");
-    
-    /* disable captcha */
-    data.append("_captcha","false");
-    
-    
-    await fetch("https://formsubmit.co/ajax/datbg.0702@gmail.com",{
+
+  <script>
+    const form = document.getElementById("feedbackForm")
+    form.addEventListener("submit", function(e){
+    e.preventDefault()
+    const data = new FormData(form)
+    fetch("https://formsubmit.co/ajax/datbg.0702@gmail.com",{
     method:"POST",
     body:data
-    });
-    
-    
-    document.getElementById("successMessage").style.display="block";
-    
-    form.reset();
-    
-    });
-    
-    </script>
-
+    })
+    .then(response => response.json())
+    .then(data => {
+    document.getElementById("successMessage").style.display="block"
+    form.reset()
+    })
+    .catch(error => console.log(error))
+    })
+  </script>
+  
   <!-- Footer Section -->
   <div id="footer-placeholder"></div>
 
