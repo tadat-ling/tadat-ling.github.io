@@ -73,17 +73,19 @@
   <!-- Personal Content Section -->
   <div class="feedback-container">
 
-    <form id="feedbackForm">
+    <form action="https://formsubmit.co/datbg.0702@gmail.com" method="POST">
     
     <textarea name="feedback" placeholder="Enter your feedback..." rows="5" required></textarea>
     
-    <input type="email" name="email" placeholder="Enter your email (optional reply)..." required>
+    <input type="email" name="email" placeholder="Enter your email..." required>
     
     <button type="submit">SEND</button>
     
-    <div id="successMessage" style="display:none;margin-top:12px;color:green;">
-    Sent successfully
-    </div>
+    <input type="hidden" name="_subject" value="New feedback from Dat Ta homepage">
+    
+    <input type="hidden" name="_captcha" value="false">
+    
+    <input type="hidden" name="_template" value="table">
     
     </form>
     
