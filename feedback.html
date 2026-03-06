@@ -72,40 +72,61 @@
 
   <!-- Personal Content Section -->
   <div class="feedback-container">
+
     <form id="feedbackForm">
-      <textarea name="feedback" placeholder="Enter your feedback..." rows="5" required></textarea>
-      <input type="email" name="email" placeholder="Enter your email..." required>
-      <button type="submit">SEND</button>
-      <div id="successMessage" style="display: none; margin-top: 10px; color: green;">Sent successfully</div>
+    
+    <textarea name="feedback" placeholder="Enter your feedback..." rows="5" required></textarea>
+    
+    <input type="email" name="email" placeholder="Enter your email (optional reply)..." required>
+    
+    <button type="submit">SEND</button>
+    
+    <div id="successMessage" style="display:none;margin-top:12px;color:green;">
+    Sent successfully
+    </div>
+    
     </form>
+    
   </div>
+    
+    
+    <script>
+    
+    document.getElementById("feedbackForm").addEventListener("submit",async function(e){
+    
+    e.preventDefault();
+    
+    const form = e.target;
+    
+    const data = new FormData(form);
+    
+    
+    /* subject */
+    data.append("_subject","New feedback from Dat Ta homepage");
+    
+    /* auto reply */
+    data.append("_autoresponse","Thank you for your feedback. I have received your message.");
+    
+    /* disable captcha */
+    data.append("_captcha","false");
+    
+    
+    await fetch("https://formsubmit.co/ajax/your_email@example.com",{
+    method:"POST",
+    body:data
+    });
+    
+    
+    document.getElementById("successMessage").style.display="block";
+    
+    form.reset();
+    
+    });
+    
+    </script>
 
   <!-- Footer Section -->
   <div id="footer-placeholder"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.3.2/dist/email.min.js"></script>
-<script type="text/javascript">
-  (function() {
-    emailjs.init("1FzHiSgWFk3zqwvWm"); // Thay YOUR_USER_ID bằng user_id từ EmailJS
-  })();
-
-  document.getElementById('feedbackForm').addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevent default form submission
-
-    const formData = {
-      feedback: this.feedback.value,
-      email: this.email.value
-    };
-
-    emailjs.send("service_pfxcw05", "template_2ij2vee", formData)
-      .then(function(response) {
-        document.getElementById('successMessage').style.display = 'block';
-        console.log('SUCCESS!', response.status, response.text);
-      }, function(error) {
-        console.log('FAILED...', error);
-      });
-  });
-</script>
 
 </body>
 </html>
