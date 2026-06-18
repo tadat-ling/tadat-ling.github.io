@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PsychoPy/Perception Exp - Dat Ta</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+        function loadComponent(id, url) {
+            fetch(url)
+                .then(response => response.text())
+                .then(data => document.getElementById(id).innerHTML = data)
+                .catch(error => console.error(`Error loading ${url}:`, error));
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            loadComponent("nav-placeholder", "nav.html");
+            loadComponent("footer-placeholder", "footer.html");
+        });
+  </script>
+</head>
+<body>
+
+  <!-- Navigation Section -->
+  <div id="nav-placeholder"></div>
+
+  <!-- Header Section -->
+  <header>
+    <h1>PsychoPy Program for Perception Experiment</h1>
+  </header>
+
+  <!-- Personal Content Section -->
+  <section id="demo">
+    <div>
+        <p>You are advised to run the program using the latest version of PsychoPy.</p>
+        <p>PsychoPy Program for Northern Vietnamese Tonal and Vowel Length Contrasts Perception Experiment <a href="Psychopy_Tone_perception.zip" download>Download</a></p>
+        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+        <img src="psychopy_tone.png" alt="PsychoPy Layout" style="width: 400px; height: auto; margin: 20px 20px 20px;">
+        </div>
+    </div>
+  </section>
+
+    <!-- 固定页脚 -->
+    <div id="footer-placeholder"></div>
+</body>
+</html>
