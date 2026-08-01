@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>句子辨认任务</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #f5f7fc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .app {
+            background: white;
+            max-width: 950px;
+            width: 95%;
+            padding: 2.5rem 2.5rem;
+            border-radius: 32px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+            margin: 1rem;
+            position: relative;
+        }
+        .attribution {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 11px;
+            color: #444;
+            background: rgba(245, 247, 252, 0.85);
+            padding: 6px 12px;
+            border-radius: 30px;
+            backdrop-filter: blur(2px);
+            line-height: 1.5;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            text-align: right;
+            border: 1px solid #e9ecf3;
+        }
+        .attribution strong {
+            font-weight: 600;
+            color: #0b1e3a;
+        }
+        .attribution span {
+            display: inline-block;
+            margin-left: 6px;
+        }
+        h1 {
+            font-weight: 500;
+            font-size: 1.8rem;
+            letter-spacing: -0.5px;
+            color: #0b1e3a;
+            margin-top: 0.2rem;
+            margin-bottom: 0.8rem;
+            border-left: 5px solid #3a7bd5;
+            padding-left: 1rem;
+        }
+        .phase-badge {
+            display: inline-block;
+            background: #eef3fe;
+            color: #1f4f9e;
+            font-weight: 500;
+            padding: 0.3rem 1.5rem;
+            border-radius: 30px;
+            font-size: 1rem;
+            letter-spacing: 0.3px;
+            margin-bottom: 1.2rem;
+        }
+        .progress-bar {
+            background: #e2e8f0;
+            height: 10px;
+            border-radius: 20px;
+            margin: 1.5rem 0 1.2rem;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3a7bd5, #2b5aa0);
+            border-radius: 20px;
+            transition: width 0.2s ease;
+        }
+        .display-area {
+            background: #fafbff;
+            border-radius: 28px;
+            padding: 2.5rem 2rem 1rem 2rem;
+            margin: 1.2rem 0 0.2rem 0;
+            border: 2px solid #eef2f9;
+            min-height: 280px;
+            height: auto;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            transition: all 0.1s;
+            cursor: default;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+        }
+        .display-area .display-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            height: 100%;
+            padding-bottom: 10px;
+            overflow: hidden;
+        }
+        .display-area.clickable {
+            cursor: pointer;
+        }
+        .fixation {
+            font-size: 5rem;
+            font-weight: 300;
+            color: #1a2b4a;
+            letter-spacing: 6px;
+            opacity: 0.9;
+        }
+        .question-text {
+            font-size: 1.8rem;
+            font-weight: 500;
+            color: #0e233f;
+            background: #eef3fe;
+            padding: 0.8rem 2.5rem;
+            border-radius: 60px;
+            display: inline-block;
+        }
+        .choice-hint {
+            display: flex;
+            gap: 3rem;
+            margin-top: 2rem;
+            font-size: 1.3rem;
+            font-weight: 450;
+            color: #1f3a62;
+        }
+        .choice-hint kbd {
+            background: #1f2e4a;
+            color: white;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0 4px;
+        }
+        .choice-btn {
+            display: inline-block;
+            padding: 0.5rem 2rem;
+            border-radius: 40px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid #1f2e4a;
+            background: white;
+            color: #1f2e4a;
+            min-width: 80px;
+            text-align: center;
+        }
+        .choice-btn:active {
+            transform: scale(0.95);
+            background: #1f2e4a;
+            color: white;
+        }
+        .choice-btn-yes {
+            border-color: #0f7b3a;
+            color: #0f7b3a;
+        }
+        .choice-btn-yes:active {
+            background: #0f7b3a;
+            color: white;
+        }
+        .choice-btn-no {
+            border-color: #b13e3e;
+            color: #b13e3e;
+        }
+        .choice-btn-no:active {
+            background: #b13e3e;
+            color: white;
+        }
+        .feedback {
+            margin-top: 0.2rem;
+            font-size: 1.8rem;
+            font-weight: 600;
+            min-height: 2.5rem;
+            text-align: center;
+        }
+        .correct-fb { color: #0f7b3a; }
+        .wrong-fb { color: #b13e3e; }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1rem;
+            color: #2d405e;
+            padding: 0.6rem 0.2rem;
+            border-top: 1px solid #eef2f9;
+            margin-top: 1rem;
+        }
+        .hidden { display: none; }
+        .btn {
+            background: #eef3fe;
+            border: none;
+            padding: 0.8rem 2.2rem;
+            border-radius: 40px;
+            font-weight: 500;
+            color: #1f4f9e;
+            cursor: pointer;
+            transition: 0.15s;
+            font-size: 1.1rem;
+        }
+        .btn-primary {
+            background: #1f4f9e;
+            color: white;
+            box-shadow: 0 4px 8px rgba(26, 67, 143, 0.15);
+        }
+        .btn-primary:hover {
+            background: #133a73;
+        }
+        .btn-primary:disabled {
+            background: #8ea4c7;
+            cursor: not-allowed;
+        }
+        .btn-success {
+            background: #0f7b3a;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #0a5f2c;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #b7c8e5;
+        }
+        .btn-outline:hover {
+            background: #eef3fe;
+        }
+        .btn-outline:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .footer-note {
+            font-size: 0.9rem;
+            color: #63738c;
+            margin-top: 1.2rem;
+        }
+        .flex-center {
+            display: flex;
+            gap: 1.2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .key-cap {
+            background: #1f2e4a;
+            color: white;
+            padding: 0.1rem 0.8rem;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+        .instruction-box {
+            text-align: left;
+            max-width: 750px;
+            margin: 0 auto;
+            padding: 0.5rem 0 0.5rem 0;
+            width: 100%;
+        }
+        .instruction-box p {
+            font-size: 1.2rem;
+            line-height: 1.9;
+            color: #1a2b4a;
+            margin: 0.6rem 0;
+        }
+        .instruction-box .highlight {
+            background: #eef3fe;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .instruction-box .key-highlight {
+            display: inline-block;
+            background: #1f2e4a;
+            color: white;
+            padding: 0.1rem 0.8rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .subject-input-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.2rem;
+            margin: 0.8rem 0 0.5rem 0;
+            flex-wrap: wrap;
+        }
+        .subject-input-group label {
+            font-weight: 500;
+            color: #1a2b4a;
+            font-size: 1.1rem;
+        }
+        .subject-input-group input {
+            padding: 0.6rem 1.2rem;
+            border: 2px solid #dce3ef;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            width: 220px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .subject-input-group input:focus {
+            border-color: #3a7bd5;
+        }
+        .subject-input-group input:disabled {
+            background: #f0f2f5;
+            color: #666;
+        }
+        .display-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            height: 100%;
+            padding-bottom: 10px;
+            overflow: hidden;
+        }
+        .download-section {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .rest-text {
+            font-size: 2.2rem;
+            font-weight: 500;
+            color: #0e233f;
+            margin-bottom: 0.5rem;
+        }
+        .rest-sub {
+            font-size: 1.3rem;
+            color: #4b6382;
+        }
+        .rest-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding-bottom: 30px;
+        }
+        .complete-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding-bottom: 20px;
+        }
+        .practice-complete-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            height: 100%;
+            padding-bottom: 10px;
+            overflow-y: auto;
+        }
+        .practice-complete-container p {
+            margin: 0.4rem 0;
+        }
+        .clickable-area {
+            cursor: pointer;
+        }
+
+        /* Responsive - tự động thu nhỏ chữ */
+        @media (max-width: 850px) {
+            .app {
+                padding: 2rem 1.5rem;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .instruction-box p {
+                font-size: 1rem !important;
+                line-height: 1.7;
+            }
+            .question-text {
+                font-size: 1.4rem;
+                padding: 0.5rem 1.5rem;
+            }
+            .choice-hint {
+                gap: 2rem;
+                font-size: 1.1rem;
+            }
+            .choice-btn {
+                font-size: 1.1rem;
+                padding: 0.4rem 1.5rem;
+                min-width: 70px;
+            }
+            .fixation {
+                font-size: 4rem;
+            }
+            .rest-text {
+                font-size: 1.8rem;
+            }
+            .rest-sub {
+                font-size: 1.1rem;
+            }
+            .feedback {
+                font-size: 1.4rem;
+                min-height: 2.2rem;
+            }
+            .phase-badge {
+                font-size: 0.85rem;
+                padding: 0.2rem 1rem;
+            }
+            .practice-complete-container {
+                font-size: 0.9rem;
+            }
+            .practice-complete-container p {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .app {
+                padding: 1.5rem 1rem;
+                width: 98%;
+            }
+            .display-area {
+                padding: 1.2rem 0.8rem 0.8rem 0.8rem;
+                min-height: 200px;
+            }
+            .display-area .display-content {
+                padding-bottom: 5px;
+            }
+            .subject-input-group input { 
+                width: 140px;
+                font-size: 0.9rem;
+                padding: 0.4rem 0.8rem;
+            }
+            .subject-input-group label {
+                font-size: 0.95rem;
+            }
+            h1 {
+                font-size: 1.3rem;
+            }
+            .instruction-box p {
+                font-size: 0.85rem !important;
+                line-height: 1.5;
+                margin: 0.4rem 0;
+            }
+            .instruction-box .key-highlight {
+                font-size: 0.8rem;
+                padding: 0.05rem 0.5rem;
+            }
+            .instruction-box {
+                padding-bottom: 0.3rem;
+            }
+            .question-text {
+                font-size: 1.1rem;
+                padding: 0.4rem 1rem;
+            }
+            .choice-hint {
+                gap: 1.2rem;
+                font-size: 0.9rem;
+                margin-top: 1rem;
+            }
+            .choice-btn {
+                font-size: 0.9rem;
+                padding: 0.3rem 1rem;
+                min-width: 55px;
+            }
+            .fixation {
+                font-size: 3rem;
+            }
+            .rest-text {
+                font-size: 1.4rem;
+            }
+            .rest-sub {
+                font-size: 0.9rem;
+            }
+            .feedback {
+                font-size: 1.2rem;
+                min-height: 1.8rem;
+            }
+            .phase-badge {
+                font-size: 0.75rem;
+                padding: 0.15rem 0.8rem;
+                margin-bottom: 0.8rem;
+            }
+            .practice-complete-container {
+                font-size: 0.75rem;
+            }
+            .practice-complete-container p {
+                font-size: 0.7rem;
+                margin: 0.2rem 0;
+            }
+            .practice-complete-container .key-highlight {
+                font-size: 0.7rem;
+                padding: 0.05rem 0.5rem;
+            }
+            .btn {
+                padding: 0.5rem 1.5rem;
+                font-size: 0.9rem;
+            }
+            .info-row {
+                font-size: 0.85rem;
+                padding: 0.4rem 0.2rem;
+            }
+            .rest-container {
+                padding-bottom: 15px;
+            }
+            .complete-container {
+                padding-bottom: 10px;
+            }
+            .practice-complete-container {
+                padding-bottom: 5px;
+            }
+            .subject-input-group {
+                margin: 0.5rem 0 0.3rem 0;
+            }
+        }
+
+        @media (max-width: 450px) {
+            .app {
+                padding: 1rem 0.6rem;
+            }
+            .display-area {
+                min-height: 160px;
+                padding: 0.8rem 0.5rem 0.5rem 0.5rem;
+                border-radius: 18px;
+            }
+            .display-area .display-content {
+                padding-bottom: 3px;
+            }
+            h1 {
+                font-size: 1.1rem;
+                padding-left: 0.6rem;
+                margin-bottom: 0.4rem;
+            }
+            .instruction-box p {
+                font-size: 0.7rem !important;
+                line-height: 1.4;
+                margin: 0.2rem 0;
+            }
+            .instruction-box .key-highlight {
+                font-size: 0.65rem;
+                padding: 0.02rem 0.4rem;
+            }
+            .question-text {
+                font-size: 0.9rem;
+                padding: 0.3rem 0.6rem;
+                border-radius: 30px;
+            }
+            .choice-hint {
+                gap: 0.8rem;
+                font-size: 0.75rem;
+                margin-top: 0.6rem;
+            }
+            .choice-btn {
+                font-size: 0.75rem;
+                padding: 0.2rem 0.6rem;
+                min-width: 40px;
+                border-radius: 25px;
+            }
+            .fixation {
+                font-size: 2.2rem;
+            }
+            .rest-text {
+                font-size: 1.1rem;
+            }
+            .rest-sub {
+                font-size: 0.75rem;
+            }
+            .feedback {
+                font-size: 1rem;
+                min-height: 1.4rem;
+                margin-top: 0.1rem;
+            }
+            .phase-badge {
+                font-size: 0.6rem;
+                padding: 0.1rem 0.6rem;
+                margin-bottom: 0.5rem;
+            }
+            .practice-complete-container {
+                font-size: 0.6rem;
+            }
+            .practice-complete-container p {
+                font-size: 0.55rem;
+                margin: 0.15rem 0;
+            }
+            .practice-complete-container .key-highlight {
+                font-size: 0.55rem;
+                padding: 0.02rem 0.4rem;
+            }
+            .btn {
+                padding: 0.4rem 1rem;
+                font-size: 0.75rem;
+            }
+            .info-row {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.1rem;
+                margin-top: 0.5rem;
+            }
+            .subject-input-group {
+                margin: 0.4rem 0 0.3rem;
+                gap: 0.6rem;
+            }
+            .subject-input-group label {
+                font-size: 0.8rem;
+            }
+            .subject-input-group input {
+                width: 100px;
+                font-size: 0.75rem;
+                padding: 0.3rem 0.6rem;
+            }
+            .progress-bar {
+                height: 6px;
+                margin: 0.6rem 0;
+            }
+            .attribution {
+                font-size: 8px;
+                padding: 4px 8px;
+                top: 8px;
+                right: 10px;
+            }
+            .rest-container {
+                padding-bottom: 8px;
+            }
+            .complete-container {
+                padding-bottom: 5px;
+            }
+            .practice-complete-container {
+                padding-bottom: 3px;
+            }
+            .download-section {
+                margin-top: 0.3rem;
+                gap: 0.5rem;
+            }
+            .flex-center {
+                gap: 0.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="attribution">
+        <strong>Laboratory of Language Sciences, Peking University</strong><br>
+        <span>Van-Dat TA</span>
+        <span style="font-size:10px; opacity:0.7;">tavandat@stu.pku.edu.cn</span>
+    </div>
+
+    <h1>辨认任务</h1>
+    <div id="phaseDisplay" class="phase-badge">指导说明</div>
+
+    <div class="progress-bar">
+        <div id="progressFill" class="progress-fill" style="width:0%"></div>
+    </div>
+
+    <div id="displayArea" class="display-area">
+        <div id="mainContent" class="display-content"></div>
+    </div>
+
+    <div id="feedbackArea" class="feedback"></div>
+
+    <div class="subject-input-group">
+        <label for="subjectIdInput">被试编号 (Subject ID):</label>
+        <input type="text" id="subjectIdInput" placeholder="例如: S001" value="">
+    </div>
+
+    <div class="flex-center" style="margin-top: 0.3rem;">
+        <button id="startBtn" class="btn btn-primary" disabled>▶ 开始</button>
+        <button id="resetBtn" class="btn btn-outline">⟲ 重置</button>
+    </div>
+
+    <div class="download-section">
+        <button id="downloadTxtBtn" class="btn btn-success" style="display:none;">📄 下载 TXT</button>
+        <button id="downloadCsvBtn" class="btn btn-success" style="display:none;">📊 下载 CSV</button>
+    </div>
+
+    <div class="info-row">
+        <span id="trialCounter">练习: 0 / 20</span>
+        <span id="rtDisplay">反应时: -- ms</span>
+    </div>
+</div>
+
+<script>
+    (function(){
+        "use strict";
+
+        // ---------- CÀI ĐẶT HỆ SỐ ----------
+        const PRACTICE_SOUND_LIST = ["eraser/1.wav", "eraser/7.wav", "pencil/1.wav", "pencil/7.wav"];
+        const PRACTICE_FACTOR = 1;
+        const TRIAL_REST = 30;
+        
+        const EXP_SOUND_LIST = [
+            "eraser/1.wav", "eraser/2.wav", "eraser/3.wav", "eraser/4.wav", "eraser/5.wav", "eraser/6.wav", "eraser/7.wav",
+            "pencil/1.wav", "pencil/2.wav", "pencil/3.wav", "pencil/4.wav", "pencil/5.wav", "pencil/6.wav", "pencil/7.wav"
+        ];
+        const EXP_FACTOR = 1;
+
+        const PRACTICE_MAP = {
+            "eraser/1.wav": "P",
+            "eraser/7.wav": "Q",
+            "pencil/1.wav": "P",
+            "pencil/7.wav": "Q"
+        };
+
+        // Tính tổng số trial
+        const PRACTICE_TOTAL = PRACTICE_SOUND_LIST.length * PRACTICE_FACTOR;
+        const FORMAL_TOTAL = EXP_SOUND_LIST.length * EXP_FACTOR;
+
+        let state = {
+            phase: 'instruction',
+            practiceTrials: [],
+            formalTrials: [],
+            currentTrialIndex: 0,
+            isWaitingResponse: false,
+            trialStartTime: 0,
+            sound1EndTime: 0,
+            rt: null,
+            trialActive: false,
+            blockKeys: false,
+            fixationTimer: null,
+            responseTimer: null,
+            currentSoundPath: '',
+            currentCorrectAnswer: null,
+            isPractice: false,
+            practiceTotal: PRACTICE_TOTAL,
+            formalTotal: FORMAL_TOTAL,
+            isFinished: false,
+            allowKeyPress: false,
+            subjectId: '',
+            isStarted: false,
+            isPracticeComplete: false,
+            practiceResults: [],
+            formalResults: [],
+            canRespondAfterSound1: false,
+            audioObjects: [],
+            isTrialEnded: false,
+            isResting: false,
+            hasDownloaded: false,
+        };
+
+        const mainContent = document.getElementById('mainContent');
+        const feedbackArea = document.getElementById('feedbackArea');
+        const progressFill = document.getElementById('progressFill');
+        const phaseDisplay = document.getElementById('phaseDisplay');
+        const trialCounter = document.getElementById('trialCounter');
+        const rtDisplay = document.getElementById('rtDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const subjectInput = document.getElementById('subjectIdInput');
+        const downloadTxtBtn = document.getElementById('downloadTxtBtn');
+        const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+        const displayArea = document.getElementById('displayArea');
+
+        // ---------- HÀM TẠO TRIALS VỚI HỆ SỐ ----------
+        function buildPracticeTrials() {
+            const trials = [];
+            for (const sound of PRACTICE_SOUND_LIST) {
+                for (let i = 0; i < PRACTICE_FACTOR; i++) {
+                    trials.push({
+                        sound: sound,
+                        correct: PRACTICE_MAP[sound],
+                        isPractice: true,
+                    });
+                }
+            }
+            for (let i = trials.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [trials[i], trials[j]] = [trials[j], trials[i]];
+            }
+            return trials;
+        }
+
+        function buildFormalTrials() {
+            const trials = [];
+            for (const sound of EXP_SOUND_LIST) {
+                for (let i = 0; i < EXP_FACTOR; i++) {
+                    trials.push({
+                        sound: sound,
+                        correct: null,
+                        isPractice: false,
+                    });
+                }
+            }
+            for (let i = trials.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [trials[i], trials[j]] = [trials[j], trials[i]];
+            }
+            return trials;
+        }
+
+        function showInstruction() {
+            state.phase = 'instruction';
+            phaseDisplay.textContent = '指导说明';
+            displayArea.classList.add('clickable');
+            // Điều chỉnh display-area để kéo dài xuống dưới
+            displayArea.style.justifyContent = 'flex-start';
+            displayArea.style.alignItems = 'center';
+            
+            mainContent.innerHTML = `
+                <div class="instruction-box" id="instructionBox" style="width:100%;">
+                    <p>您将听到一个句子，请判断：</p>
+                    <p style="font-size:1.4rem; font-weight:500; color:#0e233f;">
+                        “说话者是否在 <span class="highlight">问您一个问题</span>？”
+                    </p>
+                    <p>请在听完后 <strong>5秒内</strong> 按下对应的键：</p>
+                    <p style="display:flex; gap:3rem; justify-content:center; margin:0.6rem 0;">
+                        <span><span class="key-highlight">Q</span> → 是（Yes）</span>
+                        <span><span class="key-highlight">P</span> → 否（No）</span>
+                    </p>
+                    <p style="font-size:1rem; color:#4b6382; margin-top:0.3rem;">
+                        先进行 <strong>${PRACTICE_TOTAL}个练习试次</strong>，然后进入 <strong>${FORMAL_TOTAL}个正式试次</strong>。
+                        每做完 <strong>${TRIAL_REST}个试次可休息一次。每个试次会播放两次声音，您可以在听完第一次后立即判断。
+                    </p>
+                    <p style="font-size:1rem; color:#4b6382; margin-top:0.3rem;">
+                        请输入您的 <strong>被试编号</strong>，然后点击 <strong>"开始"</strong>。
+                    </p>
+                    <p style="font-size:0.9rem; color:#888; margin-top:0.3rem;">👆 点击屏幕或按 Enter 开始</p>
+                </div>
+            `;
+            feedbackArea.textContent = '';
+            progressFill.style.width = '0%';
+            trialCounter.textContent = `练习: 0 / ${PRACTICE_TOTAL}`;
+            rtDisplay.textContent = '反应时: -- ms';
+            state.blockKeys = true;
+            state.allowKeyPress = false;
+            state.isStarted = false;
+            startBtn.textContent = '▶ 开始';
+            startBtn.disabled = true;
+            resetBtn.disabled = false;
+            subjectInput.disabled = false;
+            subjectInput.value = '';
+            subjectInput.focus();
+            downloadTxtBtn.style.display = 'none';
+            downloadCsvBtn.style.display = 'none';
+            state.hasDownloaded = false;
+
+            displayArea.onclick = function(e) {
+                if (state.phase === 'instruction' && !state.isStarted && !startBtn.disabled) {
+                    startTest();
+                }
+            };
+        }
+
+        function showQuestionScreen() {
+            displayArea.classList.remove('clickable');
+            displayArea.style.justifyContent = 'center';
+            displayArea.style.alignItems = 'center';
+            mainContent.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%;">
+                    <div class="question-text">说话者是否在问你问题？</div>
+                    <div class="choice-hint" style="margin-top:1.5rem;">
+                        <span class="choice-btn choice-btn-yes" id="choiceYes" data-choice="Q">Q 是</span>
+                        <span class="choice-btn choice-btn-no" id="choiceNo" data-choice="P">P 否</span>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('choiceYes').addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (!state.blockKeys && state.allowKeyPress && state.trialActive && state.canRespondAfterSound1 && !state.isTrialEnded) {
+                    handleChoice('Q');
+                }
+            });
+            
+            document.getElementById('choiceNo').addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (!state.blockKeys && state.allowKeyPress && state.trialActive && state.canRespondAfterSound1 && !state.isTrialEnded) {
+                    handleChoice('P');
+                }
+            });
+        }
+
+        function showFixationScreen() {
+            displayArea.classList.remove('clickable');
+            displayArea.style.justifyContent = 'center';
+            displayArea.style.alignItems = 'center';
+            mainContent.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%;">
+                    <div class="fixation">+</div>
+                </div>
+            `;
+        }
+
+        function showPracticeCompleteScreen() {
+            state.isPracticeComplete = true;
+            phaseDisplay.textContent = '练习完成';
+            displayArea.classList.add('clickable');
+            displayArea.style.justifyContent = 'flex-start';
+            displayArea.style.alignItems = 'center';
+            mainContent.innerHTML = `
+                <div class="practice-complete-container" id="practiceCompleteContainer" style="width:100%;">
+                    <div style="font-size:2rem; font-weight:500; color:#0e233f; margin-bottom:0.3rem;">您已完成练习部分</div>
+                    <div style="font-size:1.2rem; color:#4b6382; margin-bottom:0.3rem;">练习试次: ${state.practiceResults.length} / ${PRACTICE_TOTAL}</div>
+                    <div style="margin-top:10px; font-size:1rem; color:#4b6382;">
+                        按 <kbd style="background:#1f2e4a; color:white; padding:0.3rem 1.2rem; border-radius:40px; font-weight:600;">P</kbd> 重新练习 · 
+                        按 <kbd style="background:#1f2e4a; color:white; padding:0.3rem 1.2rem; border-radius:40px; font-weight:600;">Space</kbd> 或点击 <strong>"继续"</strong> 开始正式实验
+                        <p style="margin-top:0.3rem;">在正式实验中，您也将听到一个句子，请判断：</p>
+                        <p style="font-size:1.3rem; font-weight:500; color:#0e233f; margin:0.3rem 0;">
+                            “说话者是否在 <span class="highlight">问您一个问题</span>？”
+                        </p>
+                        <p style="margin:0.2rem 0;">请在听完后 <strong>5秒内</strong> 按下对应的键：</p>
+                        <p style="display:flex; gap:2.5rem; justify-content:center; margin:0.4rem 0;">
+                            <span><span class="key-highlight">Q</span> → 是（Yes）</span>
+                            <span><span class="key-highlight">P</span> → 否（No）</span>
+                        </p>
+                        <p style="font-size:1rem; color:#4b6382; margin:0.2rem 0;">
+                            每个试次会播放两次声音，您可以在听完第一次后立即判断。
+                        </p>
+                        <p style="font-size:0.9rem; color:#888; margin-top:0.3rem;">👆 点击屏幕继续</p>
+                    </div>
+                </div>
+            `;
+            startBtn.textContent = '▶ 继续';
+            startBtn.disabled = false;
+            resetBtn.disabled = true;
+            state.blockKeys = true;
+            state.allowKeyPress = false;
+
+            displayArea.onclick = function(e) {
+                if (state.isPracticeComplete && !startBtn.disabled) {
+                    startFormalTest();
+                }
+            };
+        }
+
+        function showRestScreen() {
+            state.isResting = true;
+            phaseDisplay.textContent = '休息';
+            displayArea.classList.add('clickable');
+            displayArea.style.justifyContent = 'center';
+            displayArea.style.alignItems = 'center';
+            mainContent.innerHTML = `
+                <div class="rest-container" id="restContainer">
+                    <div class="rest-text">休息一下</div>
+                    <div class="rest-sub">请稍作休息，准备继续</div>
+                    <div style="margin-top:18px; font-size:1.1rem; color:#4b6382;">
+                        按 <kbd style="background:#1f2e4a; color:white; padding:0.3rem 1.2rem; border-radius:40px; font-weight:600; font-size:1.1rem;">Space</kbd> 或点击 <strong>"继续"</strong>
+                    </div>
+                    <p style="font-size:0.9rem; color:#888; margin-top:0.5rem;">👆 点击屏幕继续</p>
+                </div>
+            `;
+            startBtn.textContent = '▶ 继续';
+            startBtn.disabled = false;
+            resetBtn.disabled = true;
+            state.blockKeys = true;
+            state.allowKeyPress = false;
+
+            displayArea.onclick = function(e) {
+                if (state.isResting && !startBtn.disabled) {
+                    continueFromRest();
+                }
+            };
+        }
+
+        function showCompleteScreen() {
+            displayArea.classList.remove('clickable');
+            displayArea.style.justifyContent = 'center';
+            displayArea.style.alignItems = 'center';
+            mainContent.innerHTML = `
+                <div class="complete-container">
+                    <div style="font-size:2.2rem; font-weight:400;">完成</div>
+                    <div style="margin-top:10px; color:#1f3a62; font-size:1.2rem;">谢谢参与！</div>
+                    <div style="margin-top:10px; font-size:1rem; color:#4b6382;">
+                        请下载数据文件，然后点击 "重置" 重新开始
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleChoice(choice) {
+            if (state.blockKeys || !state.allowKeyPress || !state.trialActive) return;
+            if (!state.canRespondAfterSound1) return;
+            if (state.isTrialEnded) return;
+            
+            const now = performance.now();
+            let rt = null;
+            
+            if (state.sound1EndTime > 0) {
+                rt = Math.round(now - state.sound1EndTime);
+            }
+
+            endTrial(choice, rt, false);
+        }
+
+        function checkStartReady() {
+            const subjectId = subjectInput.value.trim();
+            if (subjectId.length > 0 && !state.isStarted && !state.isFinished) {
+                startBtn.disabled = false;
+            } else {
+                startBtn.disabled = true;
+            }
+        }
+
+        function showFixation(duration = 500) {
+            return new Promise((resolve) => {
+                state.blockKeys = true;
+                state.allowKeyPress = false;
+                state.canRespondAfterSound1 = false;
+                showFixationScreen();
+                feedbackArea.textContent = '';
+                if (state.fixationTimer) clearTimeout(state.fixationTimer);
+                state.fixationTimer = setTimeout(() => {
+                    resolve();
+                }, duration);
+            });
+        }
+
+        function stopAllAudio() {
+            state.audioObjects.forEach(audio => {
+                try {
+                    audio.pause();
+                    audio.currentTime = 0;
+                } catch(e) {}
+            });
+            state.audioObjects = [];
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        function getCorrectValue(soundPath, response) {
+            if (soundPath === 'eraser/1.wav' && response === 'P') return 'correct';
+            if (soundPath === 'eraser/7.wav' && response === 'Q') return 'correct';
+            if (soundPath === 'eraser/1.wav' && response === 'Q') return 'incorrect';
+            if (soundPath === 'eraser/7.wav' && response === 'P') return 'incorrect';
+            if (soundPath === 'pencil/1.wav' && response === 'P') return 'correct';
+            if (soundPath === 'pencil/7.wav' && response === 'Q') return 'correct';
+            if (soundPath === 'pencil/1.wav' && response === 'Q') return 'incorrect';
+            if (soundPath === 'pencil/7.wav' && response === 'P') return 'incorrect';
+            return 'NA';
+        }
+
+        function updateProgress() {
+            if (state.phase === 'practice' || state.phase === 'practice_complete') {
+                const done = state.currentTrialIndex;
+                const total = PRACTICE_TOTAL;
+                const pct = Math.min(100, Math.round(((done) / total) * 100));
+                progressFill.style.width = pct + '%';
+                trialCounter.textContent = `练习试次: ${done} / ${total}`;
+            } else if (state.phase === 'formal') {
+                const done = state.currentTrialIndex;
+                const total = FORMAL_TOTAL;
+                const pct = Math.min(100, Math.round(((done) / total) * 100));
+                progressFill.style.width = pct + '%';
+                trialCounter.textContent = `正式试次: ${done} / ${total}`;
+            }
+        }
+
+        function endTrial(choice, rt, isTimeout = false) {
+            if (state.isTrialEnded) return;
+            state.isTrialEnded = true;
+            
+            stopAllAudio();
+            
+            state.isWaitingResponse = false;
+            state.allowKeyPress = false;
+            state.trialActive = false;
+            state.canRespondAfterSound1 = false;
+            
+            if (state.responseTimer) {
+                clearTimeout(state.responseTimer);
+                state.responseTimer = null;
+            }
+
+            const session = state.isPractice ? 'practice' : 'exp';
+            let correctVal = 'NA';
+            let feedbackText = '';
+
+            if (isTimeout) {
+                feedbackText = '⏱️ 超时';
+                feedbackArea.style.color = '#b13e3e';
+                correctVal = state.isPractice ? getCorrectValue(state.currentSoundPath, null) : 'NA';
+                
+                const resultData = {
+                    subject: state.subjectId,
+                    session: session,
+                    time: getCurrentTime(),
+                    stimuli: state.currentSoundPath,
+                    response: 'NA',
+                    rt: 'NA',
+                    correct: correctVal,
+                };
+                
+                if (state.isPractice) {
+                    state.practiceResults.push(resultData);
+                } else {
+                    state.formalResults.push(resultData);
+                }
+            } else {
+                correctVal = state.isPractice ? getCorrectValue(state.currentSoundPath, choice) : 'NA';
+                
+                if (state.isPractice) {
+                    if (correctVal === 'correct') {
+                        feedbackText = '正确';
+                        feedbackArea.style.color = 'green';
+                    } else if (correctVal === 'incorrect') {
+                        feedbackText = '错误';
+                        feedbackArea.style.color = 'red';
+                    } else {
+                        feedbackText = '';
+                        feedbackArea.style.color = '#1f4f9e';
+                    }
+                } else {
+                    feedbackText = '';
+                    feedbackArea.style.color = '#1f4f9e';
+                }
+                
+                const resultData = {
+                    subject: state.subjectId,
+                    session: session,
+                    time: getCurrentTime(),
+                    stimuli: state.currentSoundPath,
+                    response: choice,
+                    rt: rt !== null ? rt + '' : 'NA',
+                    correct: correctVal,
+                };
+                
+                if (state.isPractice) {
+                    state.practiceResults.push(resultData);
+                } else {
+                    state.formalResults.push(resultData);
+                }
+                
+                rtDisplay.textContent = rt !== null ? `反应时: ${rt} ms` : '反应时: -- ms';
+            }
+            
+            feedbackArea.textContent = feedbackText;
+            
+            state.currentTrialIndex++;
+            
+            if (state.phase === 'formal' && state.currentTrialIndex % TRIAL_REST === 0 && state.currentTrialIndex < FORMAL_TOTAL) {
+                setTimeout(() => {
+                    showRestScreen();
+                }, 500);
+                return;
+            }
+            
+            setTimeout(() => {
+                state.isTrialEnded = false;
+                runTrial();
+            }, 500);
+        }
+
+        function playSoundSequence(soundPath) {
+            return new Promise((resolve) => {
+                showQuestionScreen();
+                state.blockKeys = true;
+                state.allowKeyPress = false;
+                state.canRespondAfterSound1 = false;
+                state.isTrialEnded = false;
+                
+                stopAllAudio();
+
+                const audio1 = new Audio(soundPath);
+                const audio2 = new Audio(soundPath);
+                state.audioObjects = [audio1, audio2];
+                
+                let playCount = 0;
+                let isResolved = false;
+
+                function resolvePromise() {
+                    if (!isResolved) {
+                        isResolved = true;
+                        resolve();
+                    }
+                }
+
+                function playFirst() {
+                    if (state.isTrialEnded) {
+                        resolvePromise();
+                        return;
+                    }
+                    audio1.currentTime = 0;
+                    audio1.play().catch(() => {
+                        setTimeout(() => {
+                            if (!state.isTrialEnded) {
+                                audio1.play().catch(() => {});
+                            }
+                        }, 100);
+                    });
+                }
+
+                function playSecond() {
+                    if (state.isTrialEnded) {
+                        resolvePromise();
+                        return;
+                    }
+                    audio2.currentTime = 0;
+                    audio2.play().catch(() => {
+                        setTimeout(() => {
+                            if (!state.isTrialEnded) {
+                                audio2.play().catch(() => {});
+                            }
+                        }, 100);
+                    });
+                }
+
+                audio1.addEventListener('ended', function onFirstEnd() {
+                    if (state.isTrialEnded) {
+                        resolvePromise();
+                        return;
+                    }
+                    if (playCount === 0) {
+                        playCount = 1;
+                        state.sound1EndTime = performance.now();
+                        state.canRespondAfterSound1 = true;
+                        state.allowKeyPress = true;
+                        state.blockKeys = false;
+                        
+                        setTimeout(() => {
+                            if (!state.isTrialEnded) {
+                                playSecond();
+                            }
+                        }, 500);
+                    }
+                    audio1.removeEventListener('ended', onFirstEnd);
+                });
+
+                audio2.addEventListener('ended', function onSecondEnd() {
+                    if (state.isTrialEnded) {
+                        resolvePromise();
+                        return;
+                    }
+                    if (playCount === 1) {
+                        playCount = 2;
+                        state.canRespondAfterSound1 = true;
+                        state.allowKeyPress = true;
+                        state.blockKeys = false;
+                        resolvePromise();
+                    }
+                    audio2.removeEventListener('ended', onSecondEnd);
+                });
+
+                audio1.load();
+                audio1.addEventListener('canplaythrough', function onCanPlay() {
+                    if (!state.isTrialEnded) {
+                        playFirst();
+                    }
+                    audio1.removeEventListener('canplaythrough', onCanPlay);
+                });
+
+                setTimeout(() => {
+                    if (playCount === 0 && !state.isTrialEnded) {
+                        playFirst();
+                    }
+                }, 2000);
+
+                setTimeout(() => {
+                    if (playCount < 2) {
+                        state.canRespondAfterSound1 = true;
+                        state.allowKeyPress = true;
+                        state.blockKeys = false;
+                        resolvePromise();
+                    }
+                }, 8000);
+            });
+        }
+
+        async function runTrial() {
+            if (state.isFinished) return;
+            if (state.isResting) return;
+
+            const trials = state.phase === 'practice' ? state.practiceTrials : state.formalTrials;
+            
+            if (state.currentTrialIndex >= trials.length) {
+                if (state.phase === 'practice') {
+                    showPracticeCompleteScreen();
+                    return;
+                } else {
+                    finishTest();
+                    return;
+                }
+            }
+
+            const trial = trials[state.currentTrialIndex];
+            state.currentSoundPath = trial.sound;
+            state.currentCorrectAnswer = trial.correct;
+            state.isPractice = trial.isPractice;
+            state.blockKeys = true;
+            state.allowKeyPress = false;
+            state.rt = null;
+            state.trialActive = true;
+            state.canRespondAfterSound1 = false;
+            state.sound1EndTime = 0;
+            state.isTrialEnded = false;
+
+            updateProgress();
+
+            await showFixation(500);
+
+            state.isWaitingResponse = true;
+            await playSoundSequence(trial.sound);
+
+            if (state.isWaitingResponse && state.trialActive && !state.isTrialEnded) {
+                const timeoutDuration = 5500;
+                
+                if (state.responseTimer) clearTimeout(state.responseTimer);
+                state.responseTimer = setTimeout(() => {
+                    if (state.isWaitingResponse && state.trialActive && !state.isTrialEnded) {
+                        endTrial(null, null, true);
+                    }
+                }, timeoutDuration);
+            }
+        }
+
+        function handleKey(e) {
+            const key = e.key;
+            
+            if (key === ' ' || key === 'Space') {
+                e.preventDefault();
+                if (state.isResting && !startBtn.disabled) {
+                    continueFromRest();
+                    return;
+                }
+                if (state.isPracticeComplete && !startBtn.disabled) {
+                    startFormalTest();
+                    return;
+                }
+                if (state.phase === 'instruction' && !startBtn.disabled) {
+                    startTest();
+                    return;
+                }
+                return;
+            }
+            
+            if ((key === 'p' || key === 'P') && state.isPracticeComplete) {
+                e.preventDefault();
+                restartPractice();
+                return;
+            }
+            
+            if (key !== 'p' && key !== 'P' && key !== 'q' && key !== 'Q') return;
+            if (state.blockKeys || !state.allowKeyPress || !state.trialActive) return;
+            if (!state.canRespondAfterSound1) return;
+            if (state.isTrialEnded) return;
+            
+            e.preventDefault();
+
+            const choice = (key === 'p' || key === 'P') ? 'P' : 'Q';
+            handleChoice(choice);
+        }
+
+        function startFormalTest() {
+            if (!state.isPracticeComplete) return;
+            state.isPracticeComplete = false;
+            state.phase = 'formal';
+            state.currentTrialIndex = 0;
+            phaseDisplay.textContent = '正式实验';
+            startBtn.textContent = '进行中';
+            startBtn.disabled = true;
+            resetBtn.disabled = true;
+            state.blockKeys = true;
+            state.allowKeyPress = false;
+            displayArea.classList.remove('clickable');
+            displayArea.onclick = null;
+            displayArea.style.justifyContent = 'center';
+            displayArea.style.alignItems = 'center';
+            updateProgress();
+            setTimeout(() => {
+                runTrial();
+            }, 300);
+        }
+
+        function restartPractice() {
+            state.isPracticeComplete = false;
+            state.phase = 'practice';
+            state.currentTrialIndex = 0;
+            state.practiceResults = [];
+            state.practiceTrials = buildPracticeTrials();
+            phaseDisplay.textContent = '练习';
+            startBtn.textContent = '进行中';
+            startBtn.disabled = true;
+            resetBtn.disabled = true;
+            state.blockKeys = true;
+            state.allowKeyPress = false;
+            feedbackArea.textContent = '';
+            displayArea.classList.remove('clickable');
+            displayArea.onclick = null;
+            displayArea.style.justifyContent = 'center';
+            displayArea.style.alignItems = 'center';
+            updateProgress();
+            setTimeout(() => {
+                runTrial();
+            }, 300);
+        }
+
+        function continueFromRest() {
+            if (!state.isResting) return;
+            state.isResting = false;
+            startBtn.textContent = '进行中';
+            startBtn.disabled = true;
+            resetBtn.disabled = true;
+            state.blockKeys = true;
+            state.allowKeyPress = false;
+            phaseDisplay.textContent = '正式实验';
+            displayArea.classList.remove('clickable');
+            displayArea.onclick = null;
+            displayArea.style.justifyContent = 'center';
+            displayArea.style.alignItems = 'center';
+            
+            setTimeout(() => {
+                runTrial();
+            }, 300);
+        }
+
+        function generateDataFiles() {
+            const allResults = [...state.practiceResults, ...state.formalResults];
+            const headers = ['subject', 'session', 'time', 'stimuli', 'response', 'rt', 'correct'];
+            const rows = allResults.map(r => [
+                r.subject,
+                r.session,
+                r.time,
+                r.stimuli,
+                r.response,
+                r.rt,
+                r.correct
+            ]);
+
+            let txtContent = headers.join('\t') + '\n';
+            rows.forEach(row => {
+                txtContent += row.join('\t') + '\n';
+            });
+
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csvContent += row.join(',') + '\n';
+            });
+
+            return { txtContent, csvContent };
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function finishTest() {
+            state.isFinished = true;
+            state.allowKeyPress = false;
+            state.blockKeys = true;
+            showCompleteScreen();
+            feedbackArea.textContent = '';
+            phaseDisplay.textContent = '结束';
+            progressFill.style.width = '100%';
+            startBtn.textContent = '✓ 已完成';
+            startBtn.disabled = true;
+            resetBtn.disabled = true;
+            subjectInput.disabled = true;
+            displayArea.classList.remove('clickable');
+            displayArea.onclick = null;
+            displayArea.style.justifyContent = 'center';
+            displayArea.style.alignItems = 'center';
+            
+            downloadTxtBtn.style.display = 'inline-block';
+            downloadCsvBtn.style.display = 'inline-block';
+            
+            console.log('Practice results:', state.practiceResults);
+            console.log('Formal results:', state.formalResults);
+        }
+
+        function initTest() {
+            if (state.fixationTimer) clearTimeout(state.fixationTimer);
+            if (state.responseTimer) clearTimeout(state.responseTimer);
+            stopAllAudio();
+            
+            state.phase = 'instruction';
+            state.currentTrialIndex = 0;
+            state.practiceResults = [];
+            state.formalResults = [];
+            state.isFinished = false;
+            state.allowKeyPress = false;
+            state.blockKeys = true;
+            state.isWaitingResponse = false;
+            state.trialActive = false;
+            state.isStarted = false;
+            state.subjectId = '';
+            state.isPracticeComplete = false;
+            state.canRespondAfterSound1 = false;
+            state.isTrialEnded = false;
+            state.isResting = false;
+            state.hasDownloaded = false;
+
+            state.practiceTrials = buildPracticeTrials();
+            state.formalTrials = buildFormalTrials();
+
+            showInstruction();
+            subjectInput.disabled = false;
+            subjectInput.value = '';
+            startBtn.textContent = '▶ 开始';
+            startBtn.disabled = true;
+            resetBtn.disabled = false;
+            feedbackArea.textContent = '';
+            progressFill.style.width = '0%';
+            trialCounter.textContent = `练习: 0 / ${PRACTICE_TOTAL}`;
+            rtDisplay.textContent = '反应时: -- ms';
+            downloadTxtBtn.style.display = 'none';
+            downloadCsvBtn.style.display = 'none';
+        }
+
+        function startTest() {
+            if (state.isResting) {
+                continueFromRest();
+                return;
+            }
+            if (state.isPracticeComplete) {
+                startFormalTest();
+                return;
+            }
+            
+            const subjectId = subjectInput.value.trim();
+            if (subjectId.length === 0) {
+                alert('请输入被试编号 (Subject ID)');
+                return;
+            }
+            state.subjectId = subjectId;
+            state.isStarted = true;
+            subjectInput.disabled = true;
+            startBtn.textContent = '进行中';
+            startBtn.disabled = true;
+            resetBtn.disabled = true;
+            state.phase = 'practice';
+            phaseDisplay.textContent = '练习';
+            state.currentTrialIndex = 0;
+            displayArea.classList.remove('clickable');
+            displayArea.onclick = null;
+            displayArea.style.justifyContent = 'center';
+            displayArea.style.alignItems = 'center';
+            updateProgress();
+            runTrial();
+        }
+
+        let downloadCount = 0;
+
+        function checkDownloadComplete() {
+            downloadCount++;
+            if (downloadCount >= 2) {
+                resetBtn.disabled = false;
+                state.hasDownloaded = true;
+                downloadCount = 0;
+            }
+        }
+
+        document.addEventListener('keydown', handleKey);
+
+        subjectInput.addEventListener('input', checkStartReady);
+        subjectInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!startBtn.disabled) {
+                    startTest();
+                }
+            }
+        });
+
+        startBtn.addEventListener('click', startTest);
+
+        resetBtn.addEventListener('click', () => {
+            if (state.isFinished && !state.hasDownloaded) {
+                alert('请先下载数据文件 (TXT 和 CSV)，然后再重置。\nPlease download both data files (TXT and CSV) before resetting.');
+                return;
+            }
+            
+            if (confirm('确定要重置吗？所有数据将被清除。\nAre you sure you want to reset? All data will be cleared.')) {
+                if (state.fixationTimer) clearTimeout(state.fixationTimer);
+                if (state.responseTimer) clearTimeout(state.responseTimer);
+                stopAllAudio();
+                state.isFinished = true;
+                downloadCount = 0;
+                setTimeout(() => {
+                    initTest();
+                }, 50);
+            }
+        });
+
+        downloadTxtBtn.addEventListener('click', () => {
+            const { txtContent } = generateDataFiles();
+            const filename = `subject_${state.subjectId}_data.txt`;
+            downloadFile(txtContent, filename, 'text/plain');
+            checkDownloadComplete();
+        });
+
+        downloadCsvBtn.addEventListener('click', () => {
+            const { csvContent } = generateDataFiles();
+            const filename = `subject_${state.subjectId}_data.csv`;
+            downloadFile(csvContent, filename, 'text/csv');
+            checkDownloadComplete();
+        });
+
+        initTest();
+    })();
+</script>
+</body>
+</html>
